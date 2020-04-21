@@ -10,12 +10,13 @@ export function buildURL(url: string, params?: any) {
         url = url.substring(0, hashIndex);
     }
 
-    
     const parts: string[] = [];
 
     function _buildURLWithKV(url: string, k: string, v: any) {
         if (isArray(v)) {
-            _buildURLWithKV(url, "k" + "[]", v);
+            for (let el of v) {
+                _buildURLWithKV(url, k + "[]", el);
+            }
         }
         k = encodeURIComponent(k);
         if (isObject(v)) {
