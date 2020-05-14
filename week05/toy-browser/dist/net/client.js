@@ -1,9 +1,19 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const net_1 = __importDefault(require("net"));
+const utils_1 = require("../utils");
 var responseParserState;
 (function (responseParserState) {
     responseParserState[responseParserState["WAITING_STATUS_LINE"] = 0] = "WAITING_STATUS_LINE";
@@ -188,11 +198,13 @@ class TrunkBodyParser {
                 this.currentState = thunkBodyParserState.WAITING_LENGTH_LINE_END;
             }
             else {
-                this.length *= 10;
-                this.length += char.charCodeAt(0) - '0'.charCodeAt(0);
+                this.length *= 16;
+                this.length += utils_1.hexToDecimal(char);
             }
         }
         else if (this.currentState === thunkBodyParserState.WAITING_LENGTH_LINE_END) {
+            if (this.length === 0)
+                return;
             if (char === '\n') {
                 this.currentState = thunkBodyParserState.WAITING_THUNK;
             }
@@ -216,12 +228,23 @@ class TrunkBodyParser {
         }
     }
 }
-let request = new Request({
-    method: 'POST',
-    host: '127.0.0.1',
-    data: {
-        name: 'winter'
-    }
-});
-console.log(request.toString());
+function test() {
+    return __awaiter(this, void 0, void 0, function* () {
+        let request = new Request({
+            method: 'POST',
+            host: '127.0.0.1',
+            port: 8080,
+            data: {
+                name: 'winter'
+            }
+        });
+        const sock = net_1.default.createConnection({
+            host: '127.0.0.1',
+            port: 8080
+        });
+        const data = yield request.send(sock);
+        console.log(data);
+    });
+}
+test();
 //# sourceMappingURL=client.js.map

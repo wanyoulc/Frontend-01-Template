@@ -1,4 +1,5 @@
 import net, { Socket } from "net";
+import {hexToDecimal} from '../utils'
 
 enum responseParserState {
     WAITING_STATUS_LINE,
@@ -206,14 +207,17 @@ class TrunkBodyParser {
                 }
                 this.currentState = thunkBodyParserState.WAITING_LENGTH_LINE_END
             }else {
-                this.length *= 10
-                this.length += char.charCodeAt(0) - '0'.charCodeAt(0)
+                // 16进制
+                this.length *= 16
+                this.length += hexToDecimal(char)
             }
         }else if (this.currentState === thunkBodyParserState.WAITING_LENGTH_LINE_END) {
+            if (this.length === 0) return
             if(char === '\n') {
                 this.currentState = thunkBodyParserState.WAITING_THUNK
             }
         }else if(this.currentState === thunkBodyParserState.WAITING_THUNK) {
+            // console.log(`length: ${this.length}, char: ${char}`)
             this.content.push(char)
             this.length--
             if(this.length === 0){
@@ -222,7 +226,7 @@ class TrunkBodyParser {
         }else if (this.currentState === thunkBodyParserState.WAITING_NEW_LINE) {
             if(char === '\r') {
                 this.currentState = thunkBodyParserState.WAITING_NEW_LINE_END
-            }
+            } 
         }else if (this.currentState === thunkBodyParserState.WAITING_NEW_LINE_END) {
             if(char === '\n') {
                 this.currentState = thunkBodyParserState.WAITING_LENGTH
@@ -231,12 +235,22 @@ class TrunkBodyParser {
     }
 }
 
-let request = new Request({
-    method: 'POST',
-    host: '127.0.0.1',
-    data: {
-        name: 'winter'
-    }
-})
+async function test() {
+    let request = new Request({
+        method: 'POST',
+        host: '127.0.0.1',
+        port: 8080,
+        data: {
+            name: 'winter'
+        }
+    })
+    const sock = net.createConnection({
+        host: '127.0.0.1',
+        port: 8080
+    }) 
+    const data = await request.send(sock)
+    console.log(data)
+}
 
-console.log(request.toString())
+
+test()
