@@ -1,4 +1,5 @@
 import { isEOF } from "../utils/index";
+import {computeCSS, addRules} from "./computeCSS"
 const tagNameRE = /^[a-zA-Z]$/;
 const whitespaceRE = /^[\t\n\f ]$/;
 const attrNameRE = /^[a-zA-Z]$/;
@@ -21,6 +22,8 @@ function emit(token: Token) {
             tagName: token.tagName
         }
         top.children ? top.children.push(element): top.children = [element]
+        element.parent = top    
+        computeCSS(element)
         if (!token.isSelfClosing){
             stack.push(element)
         }
@@ -29,6 +32,9 @@ function emit(token: Token) {
         if(top.tagName !== token.tagName){
             throw new Error("Tag does not matched")
         }else{
+            if(token.tagName === 'style' && top.children){
+                addRules(top.children[0].content!)
+            }
             stack.pop()
         }
     }else if(token.type === 'text'){
@@ -37,6 +43,7 @@ function emit(token: Token) {
                 type: "text",
                 content: ""
             }
+            currentTextNode.parent = top
             top.children ? top.children.push(currentTextNode): top.children = [currentTextNode]
         }
         currentTextNode.content += token.content!

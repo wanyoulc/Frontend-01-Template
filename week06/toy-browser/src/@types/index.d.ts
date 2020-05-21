@@ -46,6 +46,8 @@ interface HtmlElement {
     type: "element" | "document" | "text";
     attributes? : HtmlAttribute[];
     children?: HtmlElement[];
-    tagName?: string
+    tagName?: string;
     content?: string;
+    parent?: HtmlElement;
+    computedStyle?: any
 }
